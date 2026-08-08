@@ -13,6 +13,18 @@ const _context = "Fault";
 
 export let item: Fault;
 
+const genericFaultItemName = t("item", {
+  _context,
+  _comment:
+    "Generic item name used when rendering a fault description without a specific item.",
+});
+
+function faultDescription(description: Fault["description"]) {
+  return singular(description)
+    .replace(/%1\$s/g, genericFaultItemName)
+    .replace(/%s/g, genericFaultItemName);
+}
+
 // 0.G
 const mendingMethods = (item.mending_methods ?? []).map((mm) => {
   const requirements = data.resolveRequirementList(mm.requirements);
@@ -78,7 +90,9 @@ const fault_flag_descriptions: Record<string, string> = {
       </ul>
     </dd>
   </dl>
-  <p style="color: var(--cata-color-gray)">{singular(item.description)}</p>
+  <p style="color: var(--cata-color-gray)">
+    {faultDescription(item.description)}
+  </p>
 </section>
 
 {#if mendingMethods.length}

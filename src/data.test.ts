@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { CddaData, countsByCharges } from "./data";
+import { CddaData, countsByCharges, singular } from "./data";
 import type { ArmorSlot } from "./types";
 
 test("flattened item group includes container item for distribution", () => {
@@ -208,4 +208,8 @@ test("countsByCharges matches Cataclysm rules", () => {
   expect(countsByCharges({ type: "COMESTIBLE" })).toBe(false);
   expect(countsByCharges({ type: "COMESTIBLE", phase: "solid" })).toBe(false);
   expect(countsByCharges({ type: "GENERIC", stackable: true })).toBe(true);
+});
+
+test("singular preserves CDDA string_format placeholders", () => {
+  expect(singular("The %1$s has shattered.")).toBe("The %1$s has shattered.");
 });

@@ -40,7 +40,7 @@ const builds = [
   {
     build_number: buildNumber,
     prerelease: false,
-    created_at: createdAt,
+    created_at: createdAt ?? null,
     langs: [],
   },
 ];

@@ -259,6 +259,7 @@ const randomableItemTypes = new Set<keyof SupportedTypesWithMapped>([
   "monster",
   "furniture",
   "terrain",
+  "vehicle",
   "vehicle_part",
   "tool_quality",
   "mutation",
@@ -513,6 +514,7 @@ Anyway?`,
       <li><a href="/monster{location.search}">{t("Monsters")}</a></li>
       <li><a href="/furniture{location.search}">{t("Furniture")}</a></li>
       <li><a href="/terrain{location.search}">{t("Terrain")}</a></li>
+      <li><a href="/vehicle{location.search}">{t("Vehicles")}</a></li>
       <li><a href="/vehicle_part{location.search}">{t("Vehicle Parts")}</a></li>
       <li><a href="/tool_quality{location.search}">{t("Qualities")}</a></li>
       <li><a href="/mutation{location.search}">{t("Mutations")}</a></li>

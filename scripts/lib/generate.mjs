@@ -17,7 +17,7 @@ export async function buildAllJson(gameDir, opts) {
 
   const data = [];
   for (const file of files) {
-    let text = (await readFile(file, "utf8")).replace(/^﻿/, "");
+    const text = (await readFile(file, "utf8")).replace(/^﻿/, "");
     let parsed;
     try {
       parsed = JSON.parse(text);

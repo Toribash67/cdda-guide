@@ -12,13 +12,13 @@ const _context = "View/Edit on GitHub";
   )}</pre>
 {#if obj.__filename}
   <a
-    href={`https://github.com/CleverRaven/Cataclysm-DDA/blob/${
+    href={`https://github.com/Toribash67/Cataclysm-DDA/blob/${
       buildNumber ?? "master"
     }/${obj.__filename}`}
     target="_blank">{t("View", { _context })}</a>
   /
   <a
-    href={`https://github.dev/CleverRaven/Cataclysm-DDA/blob/${
+    href={`https://github.dev/Toribash67/Cataclysm-DDA/blob/${
       buildNumber ?? "master"
     }/${obj.__filename}`}
     target="_blank">{t("Edit on GitHub", { _context })}</a>

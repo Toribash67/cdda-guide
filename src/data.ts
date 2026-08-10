@@ -2007,7 +2007,7 @@ const fetchJson = async (
   progress: (receivedBytes: number, totalBytes: number) => void,
 ) => {
   return fetchJsonWithProgress(
-    `https://raw.githubusercontent.com/nornagon/cdda-data/main/data/${version}/all.json`,
+    `${import.meta.env.BASE_URL}data/${version}/all.json`,
     progress,
   );
 };
@@ -2018,7 +2018,7 @@ const fetchLocaleJson = async (
   progress: (receivedBytes: number, totalBytes: number) => void,
 ) => {
   return fetchJsonWithProgress(
-    `https://raw.githubusercontent.com/nornagon/cdda-data/main/data/${version}/lang/${locale}.json`,
+    `${import.meta.env.BASE_URL}data/${version}/lang/${locale}.json`,
     progress,
   );
 };

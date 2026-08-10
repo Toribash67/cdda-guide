@@ -356,6 +356,31 @@ export const terrainByOMSAppearance = lazily((data: CddaData) =>
   computeLootByOMSAppearance(data, (mg) => getTerrainForMapgen(data, mg)),
 );
 
+export const vehicleByOMSAppearance = lazily((data: CddaData) =>
+  computeLootByOMSAppearance(data, (mg) => getVehiclesForMapgen(data, mg)),
+);
+
+export type VehicleGroupMembership = {
+  group_id: string;
+  weight: number;
+  groupTotal: number;
+};
+export const vehicleGroupMembership = lazily((data: CddaData) => {
+  const membership = new Map<string, VehicleGroupMembership[]>();
+  for (const group of data.byType("vehicle_group")) {
+    if (!group.id) continue;
+    const members: [string, number][] = (group.vehicles ?? []).map((v) =>
+      Array.isArray(v) ? [v[0], v[1]] : [v, 1],
+    );
+    const groupTotal = members.reduce((m, [, w]) => m + w, 0);
+    for (const [vid, weight] of members) {
+      if (!membership.has(vid)) membership.set(vid, []);
+      membership.get(vid)!.push({ group_id: group.id, weight, groupTotal });
+    }
+  }
+  return membership;
+});
+
 export const getOMSByAppearance = lazily(
   (data: CddaData): Map<string | undefined, string[]> => {
     const omsByAppearance = new Map<string | undefined, string[]>();

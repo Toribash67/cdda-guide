@@ -10,6 +10,7 @@ import {
   parsePalette,
   repeatChance,
   resolveVehicleField,
+  vehicleGroupMembership,
 } from "./spawnLocations";
 import { CddaData } from "../../data";
 import type { ItemGroupData, Mapgen } from "../../types";
@@ -681,5 +682,33 @@ describe("getVehiclesForMapgen()", () => {
     // palette symbol "V" appears twice at 50% each:
     //   prob = 1-(1-0.5)^2 = 0.75 ; expected = 0.5+0.5 = 1
     expect(loot.get("motorcycle")).toStrictEqual({ prob: 0.75, expected: 1 });
+  });
+});
+
+describe("vehicleGroupMembership()", () => {
+  it("indexes each vehicle to its groups with weight and group total", () => {
+    const data = new CddaData([
+      {
+        type: "vehicle_group",
+        id: "city_vehicles",
+        vehicles: [
+          ["car", 700],
+          ["bike", 300],
+        ],
+      },
+      {
+        type: "vehicle_group",
+        id: "road_vehicles",
+        vehicles: [["car", 400]],
+      },
+    ]);
+    const got = vehicleGroupMembership(data);
+    expect(got.get("car")).toStrictEqual([
+      { group_id: "city_vehicles", weight: 700, groupTotal: 1000 },
+      { group_id: "road_vehicles", weight: 400, groupTotal: 400 },
+    ]);
+    expect(got.get("bike")).toStrictEqual([
+      { group_id: "city_vehicles", weight: 300, groupTotal: 1000 },
+    ]);
   });
 });

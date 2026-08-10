@@ -8,6 +8,7 @@ import {
   parseItemGroup,
   parsePalette,
   repeatChance,
+  resolveVehicleField,
 } from "./spawnLocations";
 import { CddaData } from "../../data";
 import type { ItemGroupData, Mapgen } from "../../types";
@@ -617,5 +618,35 @@ describe("furniture", () => {
     ]);
     const loot = getFurnitureForMapgen(data, data.byType("mapgen")[0]);
     expect(loot.get("f_test_furn")).toEqual({ prob: 1, expected: 1 });
+  });
+});
+
+describe("resolveVehicleField()", () => {
+  it("treats a bare id with no group as a 100% single-entry group", () => {
+    const got = resolveVehicleField(emptyData, "car");
+    expect(got).toStrictEqual(new Map([["car", 1]]));
+  });
+  it("resolves an explicit group into normalized weight fractions", () => {
+    const data = new CddaData([
+      {
+        type: "vehicle_group",
+        id: "g",
+        vehicles: [
+          ["car", 700],
+          ["bike", 300],
+        ],
+      },
+    ]);
+    const got = resolveVehicleField(data, "g");
+    expect(got).toStrictEqual(
+      new Map([
+        ["car", 0.7],
+        ["bike", 0.3],
+      ]),
+    );
+  });
+  it("treats an unknown id as itself at 100%", () => {
+    const got = resolveVehicleField(emptyData, "nonexistent");
+    expect(got).toStrictEqual(new Map([["nonexistent", 1]]));
   });
 });

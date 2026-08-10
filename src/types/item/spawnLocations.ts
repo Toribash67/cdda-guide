@@ -508,6 +508,26 @@ function getMapgenValueDistribution(val: raw.MapgenValue): Map<string, number> {
   return new Map();
 }
 
+export function resolveVehicleField(
+  data: CddaData,
+  field: raw.MapgenValue,
+): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const [id, prob] of getMapgenValueDistribution(field).entries()) {
+    const group = data.byIdMaybe("vehicle_group", id);
+    const members: [string, number][] = group
+      ? (group.vehicles ?? []).map((v) =>
+          Array.isArray(v) ? [v[0], v[1]] : [v, 1],
+        )
+      : [[id, 1]];
+    const total = members.reduce((m, [, w]) => m + w, 0) || 1;
+    for (const [vid, weight] of members) {
+      result.set(vid, (result.get(vid) ?? 0) + prob * (weight / total));
+    }
+  }
+  return result;
+}
+
 function toLoot(distribution: Map<string, number>): Loot {
   // TODO: i'm not sure this is correct?
   return new Map(

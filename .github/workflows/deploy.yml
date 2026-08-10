@@ -32,14 +32,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
       - name: Generate data
         run: node scripts/generate-data.mjs game
 
       - name: Validate data
         run: node scripts/validate-data.mjs
+
+      - name: Extract game build number
+        run: echo "GAME_SHA=$(jq -r '.[0].build_number' public/builds.json)" >> "$GITHUB_ENV"
 
       - name: Set image name
         run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/cdda-guide-web" >> "$GITHUB_ENV"
@@ -62,4 +62,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:${{ env.GAME_SHA }}

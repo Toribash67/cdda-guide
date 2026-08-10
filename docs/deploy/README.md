@@ -74,4 +74,7 @@ node scripts/generate-data.mjs ../Cataclysm-DDA && node scripts/validate-data.mj
 
 ## Rollback
 
-Deploy a previous image by tag: `ghcr.io/toribash67/cdda-guide-web:<git-sha>`.
+Images are tagged with the **game** commit SHA (`build_number` from
+`public/builds.json`, the same version shown in the guide's UI), not the
+guide repo's SHA — this stays unique across game-only rebuilds. Deploy a
+previous image by tag: `ghcr.io/toribash67/cdda-guide-web:<game-commit-sha>`.

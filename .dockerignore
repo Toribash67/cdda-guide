@@ -1,0 +1,8 @@
+node_modules
+.git
+game
+_test
+_rendered
+dist
+dev-dist
+docs

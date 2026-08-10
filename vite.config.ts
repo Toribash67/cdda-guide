@@ -50,6 +50,17 @@ export default defineConfig({
         navigateFallback: "index.html",
         runtimeCaching: [
           {
+            // Our same-origin data. latest/all.json changes per build, so
+            // prefer the network but fall back to cache offline.
+            urlPattern: ({ url }) =>
+              url.pathname.endsWith("/data/latest/all.json"),
+            handler: "NetworkFirst",
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.endsWith("/builds.json"),
+            handler: "NetworkFirst",
+          },
+          {
             // latest/all.json updates regularly, so try the network first.
             urlPattern:
               /^https:\/\/raw\.githubusercontent\.com\/.*\/latest\/all\.json$/,

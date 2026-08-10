@@ -1,0 +1,7 @@
+[
+  "bare string primitive",
+  { "type": "ITEM", "id": "obj1", "name": "object in mixed array" },
+  42,
+  { "type": "ITEM", "id": "obj2", "name": "second object" },
+  [1, 2, 3]
+]

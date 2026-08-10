@@ -40,7 +40,7 @@ let builds:
     }[]
   | null = null;
 
-fetch("https://raw.githubusercontent.com/nornagon/cdda-data/main/builds.json")
+fetch(`${import.meta.env.BASE_URL}builds.json`)
   .then((d) => d.json())
   .then((b) => {
     builds = b;
@@ -57,39 +57,39 @@ data.setVersion(version, locale);
 const tilesets = [
   {
     name: "AltiCa",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/Altica",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/Altica",
   },
   {
     name: "BrownLikeBears",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/BrownLikeBears",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/BrownLikeBears",
   },
   {
     name: "Chibi_Ultica",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/ChibiUltica",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/ChibiUltica",
   },
   {
     name: "Cuteclysm(Alpha)",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/Cuteclysm",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/Cuteclysm",
   },
   {
     name: "Hollow Moon",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/HollowMoon",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/HollowMoon",
   },
   {
     name: "MSXotto+",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/MshockXotto%2B",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/MshockXotto%2B",
   },
   {
     name: "NeoDays",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/NeoDaysTileset",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/NeoDaysTileset",
   },
   {
     name: "RetroDays",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/RetroDaysTileset",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/RetroDaysTileset",
   },
   {
     name: "UltiCa",
-    url: "https://raw.githubusercontent.com/CleverRaven/Cataclysm-DDA/{version}/gfx/UltimateCataclysm",
+    url: "https://raw.githubusercontent.com/Toribash67/Cataclysm-DDA/{version}/gfx/UltimateCataclysm",
   },
 ];
 

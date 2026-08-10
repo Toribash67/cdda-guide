@@ -676,6 +676,42 @@ export function getFurnitureForMapgen(
   return loot;
 }
 
+const vehiclesForMapgenCache = new WeakMap<raw.Mapgen, Loot>();
+export function getVehiclesForMapgen(data: CddaData, mapgen: raw.Mapgen): Loot {
+  if (vehiclesForMapgenCache.has(mapgen))
+    return vehiclesForMapgenCache.get(mapgen)!;
+  const palette = parseVehiclePalette(data, mapgen.object);
+  const place_vehicles: Loot[] = (mapgen.object.place_vehicles ?? []).map(
+    ({ vehicle, chance = 100 }) => {
+      const loot: Loot = new Map();
+      for (const [vid, frac] of resolveVehicleField(data, vehicle).entries()) {
+        const p = (chance / 100) * frac;
+        loot.set(vid, { prob: p, expected: p });
+      }
+      return loot;
+    },
+  );
+  const additional_items = collection([...place_vehicles]);
+  const countByPalette = new Map<string, number>();
+  for (const row of mapgen.object.rows ?? [])
+    for (const char of row)
+      if (palette.has(char))
+        countByPalette.set(char, (countByPalette.get(char) ?? 0) + 1);
+  const items: Loot[] = [];
+  for (const [sym, count] of countByPalette.entries()) {
+    const loot = palette.get(sym)!;
+    const multipliedLoot: Loot = new Map();
+    for (const [id, chance] of loot.entries()) {
+      multipliedLoot.set(id, repeatItemChance(chance, [count, count]));
+    }
+    items.push(multipliedLoot);
+  }
+  items.push(additional_items);
+  const loot = collection(items);
+  vehiclesForMapgenCache.set(mapgen, loot);
+  return loot;
+}
+
 const terrainForMapgenCache = new WeakMap<raw.Mapgen, Loot>();
 export function getTerrainForMapgen(data: CddaData, mapgen: raw.Mapgen): Loot {
   if (terrainForMapgenCache.has(mapgen))
@@ -925,6 +961,49 @@ export function parseFurniturePalette(
   });
   const ret = mergePalettes([furniture, ...palettes]);
   furniturePaletteCache.set(palette, ret);
+  return ret;
+}
+
+const vehiclePaletteCache = new WeakMap<raw.PaletteData, Map<string, Loot>>();
+export function parseVehiclePalette(
+  data: CddaData,
+  palette: raw.PaletteData,
+): Map<string, Loot> {
+  if (vehiclePaletteCache.has(palette))
+    return vehiclePaletteCache.get(palette)!;
+  const vehicles = parsePlaceMapping(
+    palette.vehicles,
+    function* ({ vehicle, chance = 100 }) {
+      const loot: Loot = new Map();
+      for (const [vid, frac] of resolveVehicleField(data, vehicle).entries()) {
+        const p = (chance / 100) * frac;
+        loot.set(vid, { prob: p, expected: p });
+      }
+      yield loot;
+    },
+  );
+  const palettes = (palette.palettes ?? []).flatMap((val) => {
+    if (typeof val === "string") {
+      return [parseVehiclePalette(data, data.byId("palette", val))];
+    } else if ("distribution" in val) {
+      const opts = val.distribution;
+      function prob<T>(it: T | [T, number]) {
+        return Array.isArray(it) ? it[1] : 1;
+      }
+      function id<T>(it: T | [T, number]) {
+        return Array.isArray(it) ? it[0] : it;
+      }
+      const totalProb = opts.reduce((m, it) => m + prob(it), 0);
+      return opts.map((it) =>
+        attenuatePalette(
+          parseVehiclePalette(data, data.byId("palette", id(it))),
+          prob(it) / totalProb,
+        ),
+      );
+    } else return [];
+  });
+  const ret = mergePalettes([vehicles, ...palettes]);
+  vehiclePaletteCache.set(palette, ret);
   return ret;
 }
 

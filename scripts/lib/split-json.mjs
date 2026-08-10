@@ -23,6 +23,10 @@ export function topLevelElementRanges(text) {
     }
     if (c === '"') {
       inStr = true;
+      // If at depth 1 in array mode and not yet tracking an element, start here
+      if (started && !outerIsObject && depth === 1 && elemStart === -1) {
+        elemStart = i;
+      }
       continue;
     }
 
@@ -53,12 +57,37 @@ export function topLevelElementRanges(text) {
 
     // Array mode.
     if (c === "{" || c === "[") {
-      if (depth === 1) elemStart = i;
+      if (depth === 1 && elemStart === -1) elemStart = i;
       depth++;
-    } else if (c === "}" || c === "]") {
+    } else if (c === "}") {
       depth--;
-      if (depth === 1) offsets.push([elemStart, i]);
-      else if (depth === 0) break; // closing outer ]
+      if (depth === 1 && elemStart !== -1) {
+        offsets.push([elemStart, i]);
+        elemStart = -1;
+      }
+    } else if (c === "]") {
+      if (depth === 1) {
+        // Closing outer bracket - finalize any open element first
+        if (elemStart !== -1) {
+          offsets.push([elemStart, i - 1]);
+          elemStart = -1;
+        }
+        break;
+      } else {
+        // Closing a nested array
+        depth--;
+        if (depth === 1 && elemStart !== -1) {
+          offsets.push([elemStart, i]);
+          elemStart = -1;
+        }
+      }
+    } else if (c === "," && depth === 1 && elemStart !== -1) {
+      // Comma at depth 1 - end of current element
+      offsets.push([elemStart, i - 1]);
+      elemStart = -1;
+    } else if (depth === 1 && elemStart === -1 && !/[\s,]/.test(c)) {
+      // Start of a primitive element (number, boolean, null)
+      elemStart = i;
     }
   }
 

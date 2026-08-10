@@ -16,6 +16,7 @@ import type { Vehicle, VehiclePart } from "../types";
 import { groupBy } from "./item/utils";
 import ThingLink from "./ThingLink.svelte";
 import ItemTable from "./item/ItemTable.svelte";
+import VehicleSpawns from "./vehicle/VehicleSpawns.svelte";
 
 export let item: Vehicle;
 
@@ -242,3 +243,5 @@ partsCounted.sort((a, b) => {
 {/if}
 
 <ItemTable loot={data.flattenItemGroupLoot(itemGroupFromVehicle(item))} />
+
+<VehicleSpawns vehicle_id={item.id} />

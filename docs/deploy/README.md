@@ -13,6 +13,7 @@ which runs `.github/workflows/deploy.yml` (regenerate data → build → push im
 ### Required secret (user action)
 
 Create a **fine-grained PAT** scoped to repository `Toribash67/cdda-guide`:
+
 - **Contents: write** (the "Create a repository dispatch event" endpoint requires it)
 - **Metadata: read** (mandatory on all fine-grained PATs)
 
@@ -52,15 +53,18 @@ enabled on port `18082`.
 To deploy on the host (after the image has been published to GHCR):
 
 **Option 1: dockge UI**
+
 1. Open dockge and create a new stack named `cdda-guide`.
 2. Paste the contents of `deploy/dockge/compose.yml` into the editor.
 3. Click **Deploy**.
 
 **Option 2: CLI**
+
 ```bash
 sudo mkdir -p /mnt/.ix-apps/app_mounts/dockge/stacks/cdda-guide
 sudo cp deploy/dockge/compose.yml /mnt/.ix-apps/app_mounts/dockge/stacks/cdda-guide/compose.yaml
 ```
+
 Then go to dockge and click **Deploy** on the `cdda-guide` stack.
 
 Once deployed, the guide is reachable on `http://127.0.0.1:18082` (or the host's network address on port `18082`).

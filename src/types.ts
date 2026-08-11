@@ -1224,7 +1224,9 @@ export type MapgenPlaceFurniture = {
 export type MapgenVehicle = {
   vehicle: MapgenValue;
   chance?: number;
-  rotation?: number | [number, number];
+  // A single rotation, or a list of candidate rotations to pick from
+  // (e.g. [0, 90, 180, 270]).
+  rotation?: number | number[];
   fuel?: number;
   status?: number;
 };

@@ -356,6 +356,31 @@ export const terrainByOMSAppearance = lazily((data: CddaData) =>
   computeLootByOMSAppearance(data, (mg) => getTerrainForMapgen(data, mg)),
 );
 
+export const vehicleByOMSAppearance = lazily((data: CddaData) =>
+  computeLootByOMSAppearance(data, (mg) => getVehiclesForMapgen(data, mg)),
+);
+
+export type VehicleGroupMembership = {
+  group_id: string;
+  weight: number;
+  groupTotal: number;
+};
+export const vehicleGroupMembership = lazily((data: CddaData) => {
+  const membership = new Map<string, VehicleGroupMembership[]>();
+  for (const group of data.byType("vehicle_group")) {
+    if (!group.id) continue;
+    const members: [string, number][] = (group.vehicles ?? []).map((v) =>
+      Array.isArray(v) ? [v[0], v[1]] : [v, 1],
+    );
+    const groupTotal = members.reduce((m, [, w]) => m + w, 0);
+    for (const [vid, weight] of members) {
+      if (!membership.has(vid)) membership.set(vid, []);
+      membership.get(vid)!.push({ group_id: group.id, weight, groupTotal });
+    }
+  }
+  return membership;
+});
+
 export const getOMSByAppearance = lazily(
   (data: CddaData): Map<string | undefined, string[]> => {
     const omsByAppearance = new Map<string | undefined, string[]>();
@@ -508,6 +533,26 @@ function getMapgenValueDistribution(val: raw.MapgenValue): Map<string, number> {
   return new Map();
 }
 
+export function resolveVehicleField(
+  data: CddaData,
+  field: raw.MapgenValue,
+): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const [id, prob] of getMapgenValueDistribution(field).entries()) {
+    const group = data.byIdMaybe("vehicle_group", id);
+    const members: [string, number][] = group
+      ? (group.vehicles ?? []).map((v) =>
+          Array.isArray(v) ? [v[0], v[1]] : [v, 1],
+        )
+      : [[id, 1]];
+    const total = members.reduce((m, [, w]) => m + w, 0) || 1;
+    for (const [vid, weight] of members) {
+      result.set(vid, (result.get(vid) ?? 0) + prob * (weight / total));
+    }
+  }
+  return result;
+}
+
 function toLoot(distribution: Map<string, number>): Loot {
   // TODO: i'm not sure this is correct?
   return new Map(
@@ -653,6 +698,42 @@ export function getFurnitureForMapgen(
   const loot = collection(items);
   loot.delete("f_null");
   furnitureForMapgenCache.set(mapgen, loot);
+  return loot;
+}
+
+const vehiclesForMapgenCache = new WeakMap<raw.Mapgen, Loot>();
+export function getVehiclesForMapgen(data: CddaData, mapgen: raw.Mapgen): Loot {
+  if (vehiclesForMapgenCache.has(mapgen))
+    return vehiclesForMapgenCache.get(mapgen)!;
+  const palette = parseVehiclePalette(data, mapgen.object);
+  const place_vehicles: Loot[] = (mapgen.object.place_vehicles ?? []).map(
+    ({ vehicle, chance = 100 }) => {
+      const loot: Loot = new Map();
+      for (const [vid, frac] of resolveVehicleField(data, vehicle).entries()) {
+        const p = (chance / 100) * frac;
+        loot.set(vid, { prob: p, expected: p });
+      }
+      return loot;
+    },
+  );
+  const additional_items = collection([...place_vehicles]);
+  const countByPalette = new Map<string, number>();
+  for (const row of mapgen.object.rows ?? [])
+    for (const char of row)
+      if (palette.has(char))
+        countByPalette.set(char, (countByPalette.get(char) ?? 0) + 1);
+  const items: Loot[] = [];
+  for (const [sym, count] of countByPalette.entries()) {
+    const loot = palette.get(sym)!;
+    const multipliedLoot: Loot = new Map();
+    for (const [id, chance] of loot.entries()) {
+      multipliedLoot.set(id, repeatItemChance(chance, [count, count]));
+    }
+    items.push(multipliedLoot);
+  }
+  items.push(additional_items);
+  const loot = collection(items);
+  vehiclesForMapgenCache.set(mapgen, loot);
   return loot;
 }
 
@@ -905,6 +986,49 @@ export function parseFurniturePalette(
   });
   const ret = mergePalettes([furniture, ...palettes]);
   furniturePaletteCache.set(palette, ret);
+  return ret;
+}
+
+const vehiclePaletteCache = new WeakMap<raw.PaletteData, Map<string, Loot>>();
+export function parseVehiclePalette(
+  data: CddaData,
+  palette: raw.PaletteData,
+): Map<string, Loot> {
+  if (vehiclePaletteCache.has(palette))
+    return vehiclePaletteCache.get(palette)!;
+  const vehicles = parsePlaceMapping(
+    palette.vehicles,
+    function* ({ vehicle, chance = 100 }) {
+      const loot: Loot = new Map();
+      for (const [vid, frac] of resolveVehicleField(data, vehicle).entries()) {
+        const p = (chance / 100) * frac;
+        loot.set(vid, { prob: p, expected: p });
+      }
+      yield loot;
+    },
+  );
+  const palettes = (palette.palettes ?? []).flatMap((val) => {
+    if (typeof val === "string") {
+      return [parseVehiclePalette(data, data.byId("palette", val))];
+    } else if ("distribution" in val) {
+      const opts = val.distribution;
+      function prob<T>(it: T | [T, number]) {
+        return Array.isArray(it) ? it[1] : 1;
+      }
+      function id<T>(it: T | [T, number]) {
+        return Array.isArray(it) ? it[0] : it;
+      }
+      const totalProb = opts.reduce((m, it) => m + prob(it), 0);
+      return opts.map((it) =>
+        attenuatePalette(
+          parseVehiclePalette(data, data.byId("palette", id(it))),
+          prob(it) / totalProb,
+        ),
+      );
+    } else return [];
+  });
+  const ret = mergePalettes([vehicles, ...palettes]);
+  vehiclePaletteCache.set(palette, ret);
   return ret;
 }
 

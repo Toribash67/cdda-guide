@@ -1221,6 +1221,16 @@ export type MapgenPlaceFurniture = {
   furn: string;
 };
 
+export type MapgenVehicle = {
+  vehicle: MapgenValue;
+  chance?: number;
+  // A single rotation, or a list of candidate rotations to pick from
+  // (e.g. [0, 90, 180, 270]).
+  rotation?: number | number[];
+  fuel?: number;
+  status?: number;
+};
+
 export interface MapgenObject {
   fill_ter?: MapgenValue;
   rows?: string[];
@@ -1243,8 +1253,8 @@ export interface MapgenObject {
   //monsters?: Monsters;
   // TODO: handle param/distribution/switch
   palettes?: MapgenValue[];
-  //place_vehicles?: PlaceVehicle[];
-  //vehicles?: ObjectVehicles;
+  place_vehicles?: PlaceList<MapgenVehicle>;
+  vehicles?: PlaceMapping<MapgenVehicle>;
   place_nested?: PlaceList<MapgenNested>;
   nested?: PlaceMapping<MapgenNested>;
   set?: MapgenSet[];
@@ -1357,7 +1367,7 @@ export interface PaletteData {
   //monster?: MonsterClass;
   item?: PlaceMapping<MapgenSpawnItem>;
   sealed_item?: PlaceMapping<MapgenSealedItem>;
-  //vehicles?: Vehicles;
+  vehicles?: PlaceMapping<MapgenVehicle>;
   //monsters?: Monsters;
   //gaspumps?: Gaspumps;
   //signs?: Signs;
@@ -1889,6 +1899,12 @@ export type MutationCategory = {
   threshold_mut?: string;
 };
 
+export type VehicleGroup = {
+  id: string;
+  type: "vehicle_group";
+  vehicles: (string | [string, number])[];
+};
+
 export type Vehicle = {
   id: string;
   type: "vehicle";
@@ -2137,6 +2153,7 @@ export type SupportedTypes = {
   uncraft: { type: "uncraft" } & Recipe;
   vehicle: Vehicle;
   vehicle_part: VehiclePart;
+  vehicle_group: VehicleGroup;
   vitamin: Vitamin;
   weapon_category: WeaponCategory;
 

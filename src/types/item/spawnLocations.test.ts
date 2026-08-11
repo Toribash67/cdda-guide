@@ -4,10 +4,13 @@
 import {
   collection,
   getFurnitureForMapgen,
+  getVehiclesForMapgen,
   getLootForMapgen,
   parseItemGroup,
   parsePalette,
   repeatChance,
+  resolveVehicleField,
+  vehicleGroupMembership,
 } from "./spawnLocations";
 import { CddaData } from "../../data";
 import type { ItemGroupData, Mapgen } from "../../types";
@@ -617,5 +620,95 @@ describe("furniture", () => {
     ]);
     const loot = getFurnitureForMapgen(data, data.byType("mapgen")[0]);
     expect(loot.get("f_test_furn")).toEqual({ prob: 1, expected: 1 });
+  });
+});
+
+describe("resolveVehicleField()", () => {
+  it("treats a bare id with no group as a 100% single-entry group", () => {
+    const got = resolveVehicleField(emptyData, "car");
+    expect(got).toStrictEqual(new Map([["car", 1]]));
+  });
+  it("resolves an explicit group into normalized weight fractions", () => {
+    const data = new CddaData([
+      {
+        type: "vehicle_group",
+        id: "g",
+        vehicles: [
+          ["car", 700],
+          ["bike", 300],
+        ],
+      },
+    ]);
+    const got = resolveVehicleField(data, "g");
+    expect(got).toStrictEqual(
+      new Map([
+        ["car", 0.7],
+        ["bike", 0.3],
+      ]),
+    );
+  });
+  it("treats an unknown id as itself at 100%", () => {
+    const got = resolveVehicleField(emptyData, "nonexistent");
+    expect(got).toStrictEqual(new Map([["nonexistent", 1]]));
+  });
+});
+
+describe("getVehiclesForMapgen()", () => {
+  it("handles place_vehicles with an explicit group and a palette symbol", () => {
+    const data = new CddaData([
+      {
+        type: "vehicle_group",
+        id: "g",
+        vehicles: [
+          ["car", 700],
+          ["bike", 300],
+        ],
+      },
+      {
+        type: "mapgen",
+        method: "json",
+        om_terrain: "test_ter",
+        object: {
+          rows: ["V", "V"],
+          vehicles: { V: { vehicle: "motorcycle", chance: 50 } },
+          place_vehicles: [{ vehicle: "g", x: 0, y: 0, chance: 100 }],
+        },
+      } as Mapgen,
+    ]);
+    const loot = getVehiclesForMapgen(data, data.byType("mapgen")[0]);
+    // place_vehicles: group "g" at 100% -> car 0.7, bike 0.3
+    expect(loot.get("car")).toStrictEqual({ prob: 0.7, expected: 0.7 });
+    expect(loot.get("bike")).toStrictEqual({ prob: 0.3, expected: 0.3 });
+    // palette symbol "V" appears twice at 50% each:
+    //   prob = 1-(1-0.5)^2 = 0.75 ; expected = 0.5+0.5 = 1
+    expect(loot.get("motorcycle")).toStrictEqual({ prob: 0.75, expected: 1 });
+  });
+});
+
+describe("vehicleGroupMembership()", () => {
+  it("indexes each vehicle to its groups with weight and group total", () => {
+    const data = new CddaData([
+      {
+        type: "vehicle_group",
+        id: "city_vehicles",
+        vehicles: [
+          ["car", 700],
+          ["bike", 300],
+        ],
+      },
+      {
+        type: "vehicle_group",
+        id: "road_vehicles",
+        vehicles: [["car", 400]],
+      },
+    ]);
+    const got = vehicleGroupMembership(data);
+    expect(got.get("car")).toStrictEqual([
+      { group_id: "city_vehicles", weight: 700, groupTotal: 1000 },
+      { group_id: "road_vehicles", weight: 400, groupTotal: 400 },
+    ]);
+    expect(got.get("bike")).toStrictEqual([
+      { group_id: "city_vehicles", weight: 300, groupTotal: 1000 },
+    ]);
   });
 });
